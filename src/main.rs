@@ -159,21 +159,22 @@ async fn main() -> std::io::Result<()> {
     let from: DateTime<Utc> = opts.from.parse().expect("Couldn't parse 'from' date");
     let to = Utc::now();
 
+    let maxp = MaxPrice{};
+    let minp = MinPrice{};
+    let pdiff = PriceDifference{};
+    let wsma = WindowedSMA{ window_size: 30 };
+
     // a simple way to output a CSV header
     println!("period start,symbol,price,change %,min,max,30d avg");
     for symbol in opts.symbols.split(',') {
         let closes = fetch_closing_data(&symbol, &from, &to).await?;
         if !closes.is_empty() {
                 // min/max of the period. unwrap() because those are Option types
-                let maxp = MaxPrice{};
                 let period_max: f64 = maxp.calculate(&closes).await.unwrap();
-                let minp = MinPrice{};
                 let period_min: f64 = minp.calculate(&closes).await.unwrap();
                 let last_price = *closes.last().unwrap_or(&0.0);
-                let pd = PriceDifference{};
-
-                let (_, pct_change) = pd.calculate(&closes).await.unwrap_or((0.0, 0.0));
-                let wsma = WindowedSMA { window_size: 30 };
+    
+                let (_, pct_change) = pdiff.calculate(&closes).await.unwrap_or((0.0, 0.0));
                 let sma = wsma.calculate(&closes).await.unwrap_or_default();
 
             // a simple way to output CSV data
